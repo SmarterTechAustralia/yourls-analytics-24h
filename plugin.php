@@ -1,12 +1,9 @@
-from pathlib import Path
-
-path = Path("/mnt/data/plugin.php")
-content = r'''<?php
+<?php
 /*
 Plugin Name: YOURLS Analytics 24h
 Plugin URI: https://github.com/SmarterTechAustralia/yourls-analytics-24h
 Description: Admin-only dashboard showing individual YOURLS clicks from the last 24 hours, including time, short link, destination and country.
-Version: 2.0.0
+Version: 2.0.1
 Author: Smarter Tech Australia
 License: MIT
 */
@@ -141,8 +138,7 @@ function ya24_country_name($code) {
         'MX'=>'Mexico',
         'ZA'=>'South Africa',
         'RU'=>'Russia',
-        'UA'=>'Ukraine',
-        'IR'=>'Iran'
+        'UA'=>'Ukraine'
     );
 
     $code = strtoupper(trim((string)$code));
@@ -392,7 +388,3 @@ function ya24_render_page() {
     echo '</div>';
     echo '</div>';
 }
-'''
-path.write_text(content, encoding="utf-8")
-print(f"Created {path}")
-print(f"Size: {path.stat().st_size} bytes")
