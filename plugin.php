@@ -56,6 +56,12 @@ function ya24_utf8_chr($codepoint) {
     return chr(0xF0 | ($codepoint >> 18)) . chr(0x80 | (($codepoint >> 12) & 0x3F)) . chr(0x80 | (($codepoint >> 6) & 0x3F)) . chr(0x80 | ($codepoint & 0x3F));
 }
 
+
+function ya24_stats_url($shorturl) {
+    $base = defined('YOURLS_SITE') ? rtrim(YOURLS_SITE, '/') : '';
+    return $base . '/' . rawurlencode((string) $shorturl) . '+';
+}
+
 function ya24_flag($code) {
     $code = strtoupper(trim((string) $code));
 
@@ -105,7 +111,7 @@ function ya24_render_page() {
     echo '.ya24-table td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:top}.ya24-table tr:hover{background:#fafafa}';
     echo '.ya24-destination{max-width:500px;word-break:break-all}.ya24-code{font-family:monospace}.ya24-country{white-space:nowrap}';
     echo '.ya24-error{background:#fff0f0;border-left:4px solid #c00;padding:12px;margin:15px 0}.ya24-debug{background:#f5f5f5;border:1px solid #ddd;padding:8px;margin-bottom:15px;font-size:12px;color:#666}';
-    echo '.ya24-muted{color:#888}.ya24-refresh{float:right}.ya24-refresh a{padding:5px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
+    echo '.ya24-muted{color:#888}.ya24-stats{font-weight:bold;text-decoration:none;margin-left:4px}.ya24-stats:hover{text-decoration:underline}.ya24-refresh{float:right}.ya24-refresh a{padding:5px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
     echo '</style>';
 
     echo '<div class="ya24-debug">Using tables: <code>' . ya24_escape($log_table) . '</code> and <code>' . ya24_escape($url_table) . '</code></div>';
@@ -178,7 +184,7 @@ function ya24_render_page() {
 
             echo '<tr>';
             echo '<td>' . ya24_escape($time) . '</td>';
-            echo '<td class="ya24-code">' . ya24_escape($shorturl) . '</td>';
+            echo '<td class="ya24-code">' . ya24_escape($shorturl) . ' <a class="ya24-stats" href="' . ya24_escape(ya24_stats_url($shorturl)) . '" target="_blank" rel="noopener" title="View YOURLS statistics">+</a></td>';
             echo '<td class="ya24-destination">' . ($destination !== '' ? ya24_escape($destination) : '<span class="ya24-muted">URL not found</span>') . '</td>';
             echo '<td class="ya24-country">' . ya24_escape(ya24_flag($cc)) . ' ' . ya24_escape(ya24_country_name($cc)) . ' <span class="ya24-muted">(' . ya24_escape($cc) . ')</span></td>';
             echo '</tr>';
