@@ -1,0 +1,84 @@
+#main {
+    max-width: 1200px;
+}
+
+.ya24-updated {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.ya24-cards {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0 30px;
+    flex-wrap: wrap;
+}
+
+.ya24-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px 30px;
+    min-width: 160px;
+    box-sizing: border-box;
+}
+
+.ya24-card strong {
+    display: block;
+    font-size: 30px;
+    line-height: 1.1;
+}
+
+.ya24-card span {
+    display: block;
+    color: #666;
+    margin-top: 6px;
+}
+
+.ya24-table {
+    margin-bottom: 30px;
+}
+
+.ya24-destination {
+    max-width: 480px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ya24-hourly {
+    max-width: 900px;
+    margin-bottom: 40px;
+}
+
+.ya24-hour {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 7px 0;
+}
+
+.ya24-hour-label {
+    width: 45px;
+    font-family: monospace;
+}
+
+.ya24-bar {
+    flex: 1;
+    height: 18px;
+    background: #eee;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ya24-bar span {
+    display: block;
+    height: 100%;
+    background: #2271b1;
+}
+
+.ya24-hour-count {
+    width: 65px;
+    text-align: right;
+    font-weight: 600;
+}
