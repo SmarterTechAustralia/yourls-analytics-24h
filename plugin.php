@@ -3,7 +3,7 @@
 Plugin Name: YOURLS Analytics 24h
 Plugin URI: https://github.com/SmarterTechAustralia/yourls-analytics-24h
 Description: Admin-only dashboard showing individual YOURLS clicks from the last 24 hours.
-Version: 3.0.0
+Version: 3.0.1
 Author: Smarter Tech Australia
 License: MIT
 */
