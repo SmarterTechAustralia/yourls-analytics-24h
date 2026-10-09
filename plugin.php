@@ -117,7 +117,7 @@ function ya24_render_page() {
 
     echo '<style>';
     echo '.ya24-wrap{max-width:1250px;margin:20px auto;padding:0 10px;font-family:Arial,sans-serif;color:#333}';
-    echo '.ya24-wrap h1{margin:0 0 6px;font-size:24px}.ya24-wrap h2{margin:0 0 10px;font-size:18px}';
+    echo '.ya24-wrap h1{margin:0;font-size:24px}.ya24-wrap h2{margin:0 0 10px;font-size:18px}.ya24-header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:0 0 6px}';
     echo '.ya24-description{color:#666;margin:0 0 20px}.ya24-cards{display:flex;gap:15px;margin:0 0 25px;flex-wrap:wrap}';
     echo '.ya24-card{background:#fff;border:1px solid #ddd;border-radius:6px;padding:18px 25px;min-width:180px;box-sizing:border-box}';
     echo '.ya24-number{font-size:32px;font-weight:bold}.ya24-label{color:#555;margin-top:5px}';
@@ -128,11 +128,14 @@ function ya24_render_page() {
     echo '.ya24-table tr.ya24-busiest td{background:#ccebd5!important;border-bottom-color:#69a879}.ya24-table tr.ya24-busiest:hover td{background:#b5dfc1!important}.ya24-table tr.ya24-second-busiest td{background:#fff3bf!important;border-bottom-color:#dfc969}.ya24-table tr.ya24-second-busiest:hover td{background:#ffeba0!important}.ya24-rank-label{display:inline-block;margin-left:6px;padding:2px 5px;border-radius:3px;color:#fff;font-family:Arial,sans-serif;font-size:10px;font-weight:bold;text-transform:uppercase}.ya24-busiest-label{background:#287a3e}.ya24-second-label{background:#8a6a00}.ya24-link-clicks{font-size:16px;font-weight:bold;text-align:center}';
     echo '.ya24-destination{max-width:500px;word-break:break-all}.ya24-referrer{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ya24-visitor-ip{display:block;margin-top:4px;font-family:monospace;font-size:12px}.ya24-code{font-family:monospace}.ya24-country{white-space:nowrap}';
     echo '.ya24-error{background:#fff0f0;border-left:4px solid #c00;padding:12px;margin:15px 0}.ya24-debug{background:#f5f5f5;border:1px solid #ddd;padding:8px;margin-bottom:15px;font-size:12px;color:#666}';
-    echo '.ya24-muted{color:#888}.ya24-stats{font-weight:bold;text-decoration:none;margin-left:4px}.ya24-stats:hover{text-decoration:underline}.ya24-refresh{float:right}.ya24-refresh a{padding:5px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
+    echo '.ya24-muted{color:#888}.ya24-stats{font-weight:bold;text-decoration:none;margin-left:4px}.ya24-stats:hover{text-decoration:underline}.ya24-refresh{flex:0 0 auto}.ya24-refresh a{display:inline-block;padding:6px 12px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
+    echo '@media(max-width:600px){.ya24-header{align-items:flex-start;flex-direction:column}.ya24-refresh{align-self:flex-end}}';
     echo '</style>';
 
-    echo '<div class="ya24-refresh"><a href="' . ya24_escape(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '') . '">Refresh</a></div>';
+    echo '<div class="ya24-header">';
     echo '<h1>YOURLS Analytics - Last 24 Hours</h1>';
+    echo '<div class="ya24-refresh"><a href="' . ya24_escape(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '') . '">Refresh</a></div>';
+    echo '</div>';
     echo '<p class="ya24-description">Individual clicks recorded during the last 24 hours.</p>';
 
     $summary = null;
