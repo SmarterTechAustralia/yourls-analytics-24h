@@ -114,7 +114,6 @@ function ya24_render_page() {
     echo '.ya24-muted{color:#888}.ya24-stats{font-weight:bold;text-decoration:none;margin-left:4px}.ya24-stats:hover{text-decoration:underline}.ya24-refresh{float:right}.ya24-refresh a{padding:5px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
     echo '</style>';
 
-    echo '<div class="ya24-debug">Using tables: <code>' . ya24_escape($log_table) . '</code> and <code>' . ya24_escape($url_table) . '</code></div>';
     echo '<div class="ya24-refresh"><a href="' . ya24_escape(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '') . '">Refresh</a></div>';
     echo '<h1>YOURLS Analytics - Last 24 Hours</h1>';
     echo '<p class="ya24-description">Individual clicks recorded during the last 24 hours.</p>';
@@ -123,7 +122,7 @@ function ya24_render_page() {
     $summary_error = '';
 
     try {
-        $summary_sql = "SELECT COUNT(*) AS total_clicks, COUNT(DISTINCT shorturl) AS total_links, COUNT(DISTINCT NULLIF(country_code, '')) AS total_countries FROM `{$log_table}` WHERE click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
+        $summary_sql = "SELECT COUNT(*) AS total_clicks, COUNT(DISTINCT shorturl) AS total_links, COUNT(DISTINCT NULLIF(country_code, '')) AS total_countries, COUNT(NULLIF(referrer, '')) AS clicks_with_referrer FROM `{$log_table}` WHERE click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
         $summary = $ydb->fetchOne($summary_sql);
     } catch (Throwable $e) {
         $summary_error = $e->getMessage();
@@ -136,6 +135,7 @@ function ya24_render_page() {
     $total_clicks = 0;
     $total_links = 0;
     $total_countries = 0;
+    $clicks_with_referrer = 0;
 
     if (is_array($summary)) {
         if (isset($summary['total_clicks'])) {
@@ -147,19 +147,23 @@ function ya24_render_page() {
         if (isset($summary['total_countries'])) {
             $total_countries = (int) $summary['total_countries'];
         }
+        if (isset($summary['clicks_with_referrer'])) {
+            $clicks_with_referrer = (int) $summary['clicks_with_referrer'];
+        }
     }
 
     echo '<div class="ya24-cards">';
     echo '<div class="ya24-card"><div class="ya24-number">' . $total_clicks . '</div><div class="ya24-label">Total clicks</div></div>';
     echo '<div class="ya24-card"><div class="ya24-number">' . $total_links . '</div><div class="ya24-label">Links</div></div>';
     echo '<div class="ya24-card"><div class="ya24-number">' . $total_countries . '</div><div class="ya24-label">Countries</div></div>';
+    echo '<div class="ya24-card"><div class="ya24-number">' . $clicks_with_referrer . '</div><div class="ya24-label">With referrer</div></div>';
     echo '</div>';
 
     $clicks = array();
     $click_error = '';
 
     try {
-        $click_sql = "SELECT l.click_time, l.shorturl, l.country_code, u.url AS destination FROM `{$log_table}` AS l LEFT JOIN `{$url_table}` AS u ON u.keyword = l.shorturl WHERE l.click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY l.click_time DESC LIMIT 1000";
+        $click_sql = "SELECT l.click_time, l.shorturl, l.country_code, u.id AS url_id, u.url AS destination FROM `{$log_table}` AS l LEFT JOIN `{$url_table}` AS u ON u.keyword = l.shorturl WHERE l.click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY l.click_time DESC LIMIT 1000";
         $clicks = $ydb->fetchObjects($click_sql);
     } catch (Throwable $e) {
         $click_error = $e->getMessage();
@@ -173,7 +177,7 @@ function ya24_render_page() {
     }
 
     echo '<div class="ya24-table-wrap"><table class="ya24-table">';
-    echo '<thead><tr><th>Time</th><th>Short Link</th><th>Destination</th><th>Country</th></tr></thead><tbody>';
+    echo '<thead><tr><th>Time</th><th>URL ID</th><th>Short Link</th><th>Destination</th><th>Country</th></tr></thead><tbody>';
 
     if (is_array($clicks) && count($clicks) > 0) {
         foreach ($clicks as $row) {
@@ -181,16 +185,18 @@ function ya24_render_page() {
             $destination = isset($row->destination) ? $row->destination : '';
             $time = isset($row->click_time) ? $row->click_time : '';
             $shorturl = isset($row->shorturl) ? $row->shorturl : '';
+            $url_id = isset($row->url_id) ? $row->url_id : '';
 
             echo '<tr>';
             echo '<td>' . ya24_escape($time) . '</td>';
+            echo '<td class="ya24-code">' . ($url_id !== '' ? ya24_escape($url_id) : '<span class="ya24-muted">-</span>') . '</td>';
             echo '<td class="ya24-code">' . ya24_escape($shorturl) . ' <a class="ya24-stats" href="' . ya24_escape(ya24_stats_url($shorturl)) . '" target="_blank" rel="noopener" title="View YOURLS statistics">+</a></td>';
             echo '<td class="ya24-destination">' . ($destination !== '' ? ya24_escape($destination) : '<span class="ya24-muted">URL not found</span>') . '</td>';
             echo '<td class="ya24-country">' . ya24_escape(ya24_flag($cc)) . ' ' . ya24_escape(ya24_country_name($cc)) . ' <span class="ya24-muted">(' . ya24_escape($cc) . ')</span></td>';
             echo '</tr>';
         }
     } elseif ($click_error === '') {
-        echo '<tr><td colspan="4" class="ya24-muted">No clicks returned by the individual click query.</td></tr>';
+        echo '<tr><td colspan="5" class="ya24-muted">No clicks returned by the individual click query.</td></tr>';
     }
 
     echo '</tbody></table></div></div>';
