@@ -14,7 +14,7 @@ A YOURLS plugin that provides an admin-only dashboard for click activity during 
 - Referrer shown as direct traffic or a linked hostname
 - Visitor IPv4 address shown beneath the referrer when available
 - Exact 24-hour click total shown for every short URL
-- Busiest short URL rows highlighted, including ties
+- Busiest short URL rows highlighted green and second-busiest rows pale yellow, including ties
 - Sortable click activity columns
 - Hourly click activity
 - Country flags

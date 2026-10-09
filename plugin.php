@@ -125,7 +125,7 @@ function ya24_render_page() {
     echo '.ya24-table{width:100%;border-collapse:collapse;font-size:13px}.ya24-table th{background:#f5f5f5;text-align:left;padding:0;border-bottom:2px solid #ddd;white-space:nowrap}';
     echo '.ya24-sort{width:100%;padding:10px;border:0;background:transparent;color:inherit;font:inherit;font-weight:bold;text-align:left;cursor:pointer}.ya24-sort:hover{background:#e9e9e9}.ya24-sort::after{content:" ↕";color:#999}.ya24-sort[data-direction="asc"]::after{content:" ↑"}.ya24-sort[data-direction="desc"]::after{content:" ↓"}';
     echo '.ya24-table td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:top}.ya24-table tr:hover{background:#fafafa}';
-    echo '.ya24-table tr.ya24-busiest td{background:#ffe08a!important;border-bottom-color:#d9aa24}.ya24-table tr.ya24-busiest:hover td{background:#ffd461!important}.ya24-busiest-label{display:inline-block;margin-left:6px;padding:2px 5px;border-radius:3px;background:#704800;color:#fff;font-family:Arial,sans-serif;font-size:10px;font-weight:bold;text-transform:uppercase}.ya24-link-clicks{font-size:16px;font-weight:bold;text-align:center}';
+    echo '.ya24-table tr.ya24-busiest td{background:#ccebd5!important;border-bottom-color:#69a879}.ya24-table tr.ya24-busiest:hover td{background:#b5dfc1!important}.ya24-table tr.ya24-second-busiest td{background:#fff3bf!important;border-bottom-color:#dfc969}.ya24-table tr.ya24-second-busiest:hover td{background:#ffeba0!important}.ya24-rank-label{display:inline-block;margin-left:6px;padding:2px 5px;border-radius:3px;color:#fff;font-family:Arial,sans-serif;font-size:10px;font-weight:bold;text-transform:uppercase}.ya24-busiest-label{background:#287a3e}.ya24-second-label{background:#8a6a00}.ya24-link-clicks{font-size:16px;font-weight:bold;text-align:center}';
     echo '.ya24-destination{max-width:500px;word-break:break-all}.ya24-referrer{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ya24-visitor-ip{display:block;margin-top:4px;font-family:monospace;font-size:12px}.ya24-code{font-family:monospace}.ya24-country{white-space:nowrap}';
     echo '.ya24-error{background:#fff0f0;border-left:4px solid #c00;padding:12px;margin:15px 0}.ya24-debug{background:#f5f5f5;border:1px solid #ddd;padding:8px;margin-bottom:15px;font-size:12px;color:#666}';
     echo '.ya24-muted{color:#888}.ya24-stats{font-weight:bold;text-decoration:none;margin-left:4px}.ya24-stats:hover{text-decoration:underline}.ya24-refresh{float:right}.ya24-refresh a{padding:5px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
@@ -205,11 +205,20 @@ function ya24_render_page() {
     echo '</tr></thead><tbody>';
 
     if (is_array($clicks) && count($clicks) > 0) {
-        $busiest_clicks = 0;
+        $ranked_click_totals = array();
 
         foreach ($clicks as $row) {
-            $busiest_clicks = max($busiest_clicks, isset($row->link_clicks) ? (int) $row->link_clicks : 0);
+            $row_link_clicks = isset($row->link_clicks) ? (int) $row->link_clicks : 0;
+
+            if ($row_link_clicks > 0) {
+                $ranked_click_totals[$row_link_clicks] = true;
+            }
         }
+
+        $ranked_click_totals = array_keys($ranked_click_totals);
+        rsort($ranked_click_totals, SORT_NUMERIC);
+        $busiest_clicks = isset($ranked_click_totals[0]) ? (int) $ranked_click_totals[0] : 0;
+        $second_busiest_clicks = isset($ranked_click_totals[1]) ? (int) $ranked_click_totals[1] : 0;
 
         foreach ($clicks as $row) {
             $cc = isset($row->country_code) ? strtoupper(trim($row->country_code)) : '';
@@ -225,11 +234,17 @@ function ya24_render_page() {
             $visitor_ipv4 = ya24_ipv4(isset($row->ip_address) ? $row->ip_address : '');
             $link_clicks = isset($row->link_clicks) ? (int) $row->link_clicks : 0;
             $is_busiest = $link_clicks > 0 && $link_clicks === $busiest_clicks;
+            $is_second_busiest = $link_clicks > 0 && $link_clicks === $second_busiest_clicks;
+            $row_class = $is_busiest ? 'ya24-busiest' : ($is_second_busiest ? 'ya24-second-busiest' : '');
 
-            echo '<tr' . ($is_busiest ? ' class="ya24-busiest"' : '') . '>';
+            echo '<tr' . ($row_class !== '' ? ' class="' . $row_class . '"' : '') . '>';
             echo '<td>' . ya24_escape($time) . '</td>';
             echo '<td class="ya24-code">' . ($click_id !== '' ? ya24_escape($click_id) : '<span class="ya24-muted">-</span>') . '</td>';
-            echo '<td class="ya24-code">' . ya24_escape($shorturl) . ' <a class="ya24-stats" href="' . ya24_escape(ya24_stats_url($shorturl)) . '" target="_blank" rel="noopener" title="View YOURLS statistics">+</a>' . ($is_busiest ? '<span class="ya24-busiest-label">Busiest</span>' : '') . '</td>';
+            echo '<td class="ya24-code">' . ya24_escape($shorturl) . ' <a class="ya24-stats" href="' . ya24_escape(ya24_stats_url($shorturl)) . '" target="_blank" rel="noopener" title="View YOURLS statistics">+</a>';
+            echo $is_busiest
+                ? '<span class="ya24-rank-label ya24-busiest-label">Busiest</span>'
+                : ($is_second_busiest ? '<span class="ya24-rank-label ya24-second-label">Second</span>' : '');
+            echo '</td>';
             echo '<td class="ya24-link-clicks">' . $link_clicks . '</td>';
             echo '<td class="ya24-destination">' . ($destination !== '' ? ya24_escape($destination) : '<span class="ya24-muted">URL not found</span>') . '</td>';
             echo '<td class="ya24-referrer">';
