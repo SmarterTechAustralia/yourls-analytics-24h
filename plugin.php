@@ -163,7 +163,7 @@ function ya24_render_page() {
     $click_error = '';
 
     try {
-        $click_sql = "SELECT l.click_time, l.shorturl, l.country_code, u.id AS url_id, u.url AS destination FROM `{$log_table}` AS l LEFT JOIN `{$url_table}` AS u ON u.keyword = l.shorturl WHERE l.click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY l.click_time DESC LIMIT 1000";
+        $click_sql = "SELECT l.click_id, l.click_time, l.shorturl, l.country_code, u.url AS destination FROM `{$log_table}` AS l LEFT JOIN `{$url_table}` AS u ON u.keyword = l.shorturl WHERE l.click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY l.click_time DESC LIMIT 1000";
         $clicks = $ydb->fetchObjects($click_sql);
     } catch (Throwable $e) {
         $click_error = $e->getMessage();
@@ -177,7 +177,7 @@ function ya24_render_page() {
     }
 
     echo '<div class="ya24-table-wrap"><table class="ya24-table">';
-    echo '<thead><tr><th>Time</th><th>URL ID</th><th>Short Link</th><th>Destination</th><th>Country</th></tr></thead><tbody>';
+    echo '<thead><tr><th>Time</th><th>Click ID</th><th>Short Link</th><th>Destination</th><th>Country</th></tr></thead><tbody>';
 
     if (is_array($clicks) && count($clicks) > 0) {
         foreach ($clicks as $row) {
@@ -185,11 +185,11 @@ function ya24_render_page() {
             $destination = isset($row->destination) ? $row->destination : '';
             $time = isset($row->click_time) ? $row->click_time : '';
             $shorturl = isset($row->shorturl) ? $row->shorturl : '';
-            $url_id = isset($row->url_id) ? $row->url_id : '';
+            $click_id = isset($row->click_id) ? $row->click_id : '';
 
             echo '<tr>';
             echo '<td>' . ya24_escape($time) . '</td>';
-            echo '<td class="ya24-code">' . ($url_id !== '' ? ya24_escape($url_id) : '<span class="ya24-muted">-</span>') . '</td>';
+            echo '<td class="ya24-code">' . ($click_id !== '' ? ya24_escape($click_id) : '<span class="ya24-muted">-</span>') . '</td>';
             echo '<td class="ya24-code">' . ya24_escape($shorturl) . ' <a class="ya24-stats" href="' . ya24_escape(ya24_stats_url($shorturl)) . '" target="_blank" rel="noopener" title="View YOURLS statistics">+</a></td>';
             echo '<td class="ya24-destination">' . ($destination !== '' ? ya24_escape($destination) : '<span class="ya24-muted">URL not found</span>') . '</td>';
             echo '<td class="ya24-country">' . ya24_escape(ya24_flag($cc)) . ' ' . ya24_escape(ya24_country_name($cc)) . ' <span class="ya24-muted">(' . ya24_escape($cc) . ')</span></td>';

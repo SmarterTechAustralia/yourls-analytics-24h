@@ -9,7 +9,7 @@ A YOURLS plugin that provides an admin-only dashboard for click activity during 
 - Number of unique short links receiving clicks
 - Number of countries
 - Clicks grouped by short link and country
-- YOURLS URL ID for each click
+- YOURLS click ID for each click
 - Destination URL for each short link
 - Hourly click activity
 - Country flags
