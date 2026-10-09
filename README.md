@@ -12,6 +12,7 @@ A YOURLS plugin that provides an admin-only dashboard for click activity during 
 - YOURLS click ID for each click
 - Destination URL for each short link
 - Referrer shown as direct traffic or a linked hostname
+- Visitor IPv4 address shown beneath the referrer when available
 - Sortable click activity columns
 - Hourly click activity
 - Country flags

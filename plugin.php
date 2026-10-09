@@ -22,6 +22,21 @@ function ya24_escape($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function ya24_ipv4($address) {
+    $address = trim((string) $address);
+
+    if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        return $address;
+    }
+
+    if (preg_match('/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i', $address, $matches)
+        && filter_var($matches[1], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        return $matches[1];
+    }
+
+    return '';
+}
+
 function ya24_country_name($code) {
     $code = strtoupper(trim((string) $code));
 
@@ -110,7 +125,7 @@ function ya24_render_page() {
     echo '.ya24-table{width:100%;border-collapse:collapse;font-size:13px}.ya24-table th{background:#f5f5f5;text-align:left;padding:0;border-bottom:2px solid #ddd;white-space:nowrap}';
     echo '.ya24-sort{width:100%;padding:10px;border:0;background:transparent;color:inherit;font:inherit;font-weight:bold;text-align:left;cursor:pointer}.ya24-sort:hover{background:#e9e9e9}.ya24-sort::after{content:" ↕";color:#999}.ya24-sort[data-direction="asc"]::after{content:" ↑"}.ya24-sort[data-direction="desc"]::after{content:" ↓"}';
     echo '.ya24-table td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:top}.ya24-table tr:hover{background:#fafafa}';
-    echo '.ya24-destination{max-width:500px;word-break:break-all}.ya24-referrer{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ya24-code{font-family:monospace}.ya24-country{white-space:nowrap}';
+    echo '.ya24-destination{max-width:500px;word-break:break-all}.ya24-referrer{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ya24-visitor-ip{display:block;margin-top:4px;font-family:monospace;font-size:12px}.ya24-code{font-family:monospace}.ya24-country{white-space:nowrap}';
     echo '.ya24-error{background:#fff0f0;border-left:4px solid #c00;padding:12px;margin:15px 0}.ya24-debug{background:#f5f5f5;border:1px solid #ddd;padding:8px;margin-bottom:15px;font-size:12px;color:#666}';
     echo '.ya24-muted{color:#888}.ya24-stats{font-weight:bold;text-decoration:none;margin-left:4px}.ya24-stats:hover{text-decoration:underline}.ya24-refresh{float:right}.ya24-refresh a{padding:5px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
     echo '</style>';
@@ -164,7 +179,7 @@ function ya24_render_page() {
     $click_error = '';
 
     try {
-        $click_sql = "SELECT l.click_id, l.click_time, l.shorturl, l.referrer, l.country_code, u.url AS destination FROM `{$log_table}` AS l LEFT JOIN `{$url_table}` AS u ON u.keyword = l.shorturl WHERE l.click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY l.click_time DESC LIMIT 1000";
+        $click_sql = "SELECT l.click_id, l.click_time, l.shorturl, l.referrer, l.ip_address, l.country_code, u.url AS destination FROM `{$log_table}` AS l LEFT JOIN `{$url_table}` AS u ON u.keyword = l.shorturl WHERE l.click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY l.click_time DESC LIMIT 1000";
         $clicks = $ydb->fetchObjects($click_sql);
     } catch (Throwable $e) {
         $click_error = $e->getMessage();
@@ -199,6 +214,7 @@ function ya24_render_page() {
             $referrer_host = $is_direct ? '' : parse_url($referrer, PHP_URL_HOST);
             $referrer_label = $referrer_host ? $referrer_host : $referrer;
             $is_referrer_url = filter_var($referrer, FILTER_VALIDATE_URL) && preg_match('/^https?:\/\//i', $referrer);
+            $visitor_ipv4 = ya24_ipv4(isset($row->ip_address) ? $row->ip_address : '');
 
             echo '<tr>';
             echo '<td>' . ya24_escape($time) . '</td>';
@@ -211,6 +227,7 @@ function ya24_render_page() {
                 : ($is_referrer_url
                     ? '<a href="' . ya24_escape($referrer) . '" target="_blank" rel="noopener noreferrer" title="' . ya24_escape($referrer) . '">' . ya24_escape($referrer_label) . '</a>'
                     : ya24_escape($referrer_label));
+                    echo '<span class="ya24-visitor-ip ya24-muted">IPv4: ' . ($visitor_ipv4 !== '' ? ya24_escape($visitor_ipv4) : 'unavailable') . '</span>';
             echo '</td>';
             echo '<td class="ya24-country">' . ya24_escape(ya24_flag($cc)) . ' ' . ya24_escape(ya24_country_name($cc)) . '</td>';
             echo '</tr>';
