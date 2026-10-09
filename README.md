@@ -5,7 +5,7 @@ A YOURLS plugin that provides an admin-only dashboard for click activity during 
 ## Features
 
 - Total clicks in the last 24 hours
-- Number of clicks with a referrer
+- Number of clicks with a non-direct referrer
 - Number of unique short links receiving clicks
 - Number of countries
 - Clicks grouped by short link and country

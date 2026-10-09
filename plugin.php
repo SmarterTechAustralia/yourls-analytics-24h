@@ -122,7 +122,7 @@ function ya24_render_page() {
     $summary_error = '';
 
     try {
-        $summary_sql = "SELECT COUNT(*) AS total_clicks, COUNT(DISTINCT shorturl) AS total_links, COUNT(DISTINCT NULLIF(country_code, '')) AS total_countries, COUNT(NULLIF(referrer, '')) AS clicks_with_referrer FROM `{$log_table}` WHERE click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
+        $summary_sql = "SELECT COUNT(*) AS total_clicks, COUNT(DISTINCT shorturl) AS total_links, COUNT(DISTINCT NULLIF(country_code, '')) AS total_countries, SUM(CASE WHEN referrer IS NOT NULL AND TRIM(referrer) <> '' AND LOWER(TRIM(referrer)) <> 'direct' THEN 1 ELSE 0 END) AS clicks_with_referrer FROM `{$log_table}` WHERE click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
         $summary = $ydb->fetchOne($summary_sql);
     } catch (Throwable $e) {
         $summary_error = $e->getMessage();
