@@ -125,6 +125,7 @@ function ya24_render_page() {
     echo '.ya24-table{width:100%;border-collapse:collapse;font-size:13px}.ya24-table th{background:#f5f5f5;text-align:left;padding:0;border-bottom:2px solid #ddd;white-space:nowrap}';
     echo '.ya24-sort{width:100%;padding:10px;border:0;background:transparent;color:inherit;font:inherit;font-weight:bold;text-align:left;cursor:pointer}.ya24-sort:hover{background:#e9e9e9}.ya24-sort::after{content:" ↕";color:#999}.ya24-sort[data-direction="asc"]::after{content:" ↑"}.ya24-sort[data-direction="desc"]::after{content:" ↓"}';
     echo '.ya24-table td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:top}.ya24-table tr:hover{background:#fafafa}';
+    echo '.ya24-table tr.ya24-busiest{background:#fff4cc}.ya24-table tr.ya24-busiest:hover{background:#ffedab}.ya24-busiest-label{display:inline-block;margin-left:6px;padding:2px 5px;border-radius:3px;background:#8a5a00;color:#fff;font-family:Arial,sans-serif;font-size:10px;font-weight:bold;text-transform:uppercase}';
     echo '.ya24-destination{max-width:500px;word-break:break-all}.ya24-referrer{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ya24-visitor-ip{display:block;margin-top:4px;font-family:monospace;font-size:12px}.ya24-code{font-family:monospace}.ya24-country{white-space:nowrap}';
     echo '.ya24-error{background:#fff0f0;border-left:4px solid #c00;padding:12px;margin:15px 0}.ya24-debug{background:#f5f5f5;border:1px solid #ddd;padding:8px;margin-bottom:15px;font-size:12px;color:#666}';
     echo '.ya24-muted{color:#888}.ya24-stats{font-weight:bold;text-decoration:none;margin-left:4px}.ya24-stats:hover{text-decoration:underline}.ya24-refresh{float:right}.ya24-refresh a{padding:5px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
@@ -203,6 +204,23 @@ function ya24_render_page() {
     echo '</tr></thead><tbody>';
 
     if (is_array($clicks) && count($clicks) > 0) {
+        $click_counts = array();
+
+        foreach ($clicks as $row) {
+            $count_shorturl = isset($row->shorturl) ? (string) $row->shorturl : '';
+
+            if ($count_shorturl !== '') {
+                $click_counts[$count_shorturl] = isset($click_counts[$count_shorturl]) ? $click_counts[$count_shorturl] + 1 : 1;
+            }
+        }
+
+        $busiest_shorturl = '';
+
+        if (count($click_counts) > 0) {
+            arsort($click_counts);
+            $busiest_shorturl = (string) key($click_counts);
+        }
+
         foreach ($clicks as $row) {
             $cc = isset($row->country_code) ? strtoupper(trim($row->country_code)) : '';
             $destination = isset($row->destination) ? $row->destination : '';
@@ -215,11 +233,12 @@ function ya24_render_page() {
             $referrer_label = $referrer_host ? $referrer_host : $referrer;
             $is_referrer_url = filter_var($referrer, FILTER_VALIDATE_URL) && preg_match('/^https?:\/\//i', $referrer);
             $visitor_ipv4 = ya24_ipv4(isset($row->ip_address) ? $row->ip_address : '');
+            $is_busiest = $shorturl !== '' && $shorturl === $busiest_shorturl;
 
-            echo '<tr>';
+            echo '<tr' . ($is_busiest ? ' class="ya24-busiest"' : '') . '>';
             echo '<td>' . ya24_escape($time) . '</td>';
             echo '<td class="ya24-code">' . ($click_id !== '' ? ya24_escape($click_id) : '<span class="ya24-muted">-</span>') . '</td>';
-            echo '<td class="ya24-code">' . ya24_escape($shorturl) . ' <a class="ya24-stats" href="' . ya24_escape(ya24_stats_url($shorturl)) . '" target="_blank" rel="noopener" title="View YOURLS statistics">+</a></td>';
+            echo '<td class="ya24-code">' . ya24_escape($shorturl) . ' <a class="ya24-stats" href="' . ya24_escape(ya24_stats_url($shorturl)) . '" target="_blank" rel="noopener" title="View YOURLS statistics">+</a>' . ($is_busiest ? '<span class="ya24-busiest-label">Busiest</span>' : '') . '</td>';
             echo '<td class="ya24-destination">' . ($destination !== '' ? ya24_escape($destination) : '<span class="ya24-muted">URL not found</span>') . '</td>';
             echo '<td class="ya24-referrer">';
             echo $is_direct
