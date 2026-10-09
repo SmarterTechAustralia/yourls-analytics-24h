@@ -107,9 +107,10 @@ function ya24_render_page() {
     echo '.ya24-card{background:#fff;border:1px solid #ddd;border-radius:6px;padding:18px 25px;min-width:180px;box-sizing:border-box}';
     echo '.ya24-number{font-size:32px;font-weight:bold}.ya24-label{color:#555;margin-top:5px}';
     echo '.ya24-section{margin-top:28px}.ya24-table-wrap{overflow-x:auto;border:1px solid #ddd;background:#fff}';
-    echo '.ya24-table{width:100%;border-collapse:collapse;font-size:13px}.ya24-table th{background:#f5f5f5;text-align:left;padding:10px;border-bottom:2px solid #ddd;white-space:nowrap}';
+    echo '.ya24-table{width:100%;border-collapse:collapse;font-size:13px}.ya24-table th{background:#f5f5f5;text-align:left;padding:0;border-bottom:2px solid #ddd;white-space:nowrap}';
+    echo '.ya24-sort{width:100%;padding:10px;border:0;background:transparent;color:inherit;font:inherit;font-weight:bold;text-align:left;cursor:pointer}.ya24-sort:hover{background:#e9e9e9}.ya24-sort::after{content:" ↕";color:#999}.ya24-sort[data-direction="asc"]::after{content:" ↑"}.ya24-sort[data-direction="desc"]::after{content:" ↓"}';
     echo '.ya24-table td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:top}.ya24-table tr:hover{background:#fafafa}';
-    echo '.ya24-destination{max-width:500px;word-break:break-all}.ya24-code{font-family:monospace}.ya24-country{white-space:nowrap}';
+    echo '.ya24-destination{max-width:500px;word-break:break-all}.ya24-referrer{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ya24-code{font-family:monospace}.ya24-country{white-space:nowrap}';
     echo '.ya24-error{background:#fff0f0;border-left:4px solid #c00;padding:12px;margin:15px 0}.ya24-debug{background:#f5f5f5;border:1px solid #ddd;padding:8px;margin-bottom:15px;font-size:12px;color:#666}';
     echo '.ya24-muted{color:#888}.ya24-stats{font-weight:bold;text-decoration:none;margin-left:4px}.ya24-stats:hover{text-decoration:underline}.ya24-refresh{float:right}.ya24-refresh a{padding:5px 10px;background:#eee;border:1px solid #ccc;text-decoration:none;border-radius:3px}';
     echo '</style>';
@@ -163,7 +164,7 @@ function ya24_render_page() {
     $click_error = '';
 
     try {
-        $click_sql = "SELECT l.click_id, l.click_time, l.shorturl, l.country_code, u.url AS destination FROM `{$log_table}` AS l LEFT JOIN `{$url_table}` AS u ON u.keyword = l.shorturl WHERE l.click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY l.click_time DESC LIMIT 1000";
+        $click_sql = "SELECT l.click_id, l.click_time, l.shorturl, l.referrer, l.country_code, u.url AS destination FROM `{$log_table}` AS l LEFT JOIN `{$url_table}` AS u ON u.keyword = l.shorturl WHERE l.click_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY l.click_time DESC LIMIT 1000";
         $clicks = $ydb->fetchObjects($click_sql);
     } catch (Throwable $e) {
         $click_error = $e->getMessage();
@@ -176,8 +177,15 @@ function ya24_render_page() {
         echo '<div class="ya24-error"><strong>Click Activity SQL error:</strong><br>' . ya24_escape($click_error) . '</div>';
     }
 
-    echo '<div class="ya24-table-wrap"><table class="ya24-table">';
-    echo '<thead><tr><th>Time</th><th>Click ID</th><th>Short Link</th><th>Destination</th><th>Country</th></tr></thead><tbody>';
+    echo '<div class="ya24-table-wrap"><table class="ya24-table" id="ya24-click-table">';
+    echo '<thead><tr>';
+    echo '<th><button class="ya24-sort" type="button" data-type="text">Time</button></th>';
+    echo '<th><button class="ya24-sort" type="button" data-type="number">Click ID</button></th>';
+    echo '<th><button class="ya24-sort" type="button" data-type="text">Short Link</button></th>';
+    echo '<th><button class="ya24-sort" type="button" data-type="text">Destination</button></th>';
+    echo '<th><button class="ya24-sort" type="button" data-type="text">Referrer</button></th>';
+    echo '<th><button class="ya24-sort" type="button" data-type="text">Country</button></th>';
+    echo '</tr></thead><tbody>';
 
     if (is_array($clicks) && count($clicks) > 0) {
         foreach ($clicks as $row) {
@@ -186,19 +194,34 @@ function ya24_render_page() {
             $time = isset($row->click_time) ? $row->click_time : '';
             $shorturl = isset($row->shorturl) ? $row->shorturl : '';
             $click_id = isset($row->click_id) ? $row->click_id : '';
+            $referrer = isset($row->referrer) ? trim($row->referrer) : '';
+            $is_direct = $referrer === '' || strtolower($referrer) === 'direct';
+            $referrer_host = $is_direct ? '' : parse_url($referrer, PHP_URL_HOST);
+            $referrer_label = $referrer_host ? $referrer_host : $referrer;
+            $is_referrer_url = filter_var($referrer, FILTER_VALIDATE_URL) && preg_match('/^https?:\/\//i', $referrer);
 
             echo '<tr>';
             echo '<td>' . ya24_escape($time) . '</td>';
             echo '<td class="ya24-code">' . ($click_id !== '' ? ya24_escape($click_id) : '<span class="ya24-muted">-</span>') . '</td>';
             echo '<td class="ya24-code">' . ya24_escape($shorturl) . ' <a class="ya24-stats" href="' . ya24_escape(ya24_stats_url($shorturl)) . '" target="_blank" rel="noopener" title="View YOURLS statistics">+</a></td>';
             echo '<td class="ya24-destination">' . ($destination !== '' ? ya24_escape($destination) : '<span class="ya24-muted">URL not found</span>') . '</td>';
-            echo '<td class="ya24-country">' . ya24_escape(ya24_flag($cc)) . ' ' . ya24_escape(ya24_country_name($cc)) . ' <span class="ya24-muted">(' . ya24_escape($cc) . ')</span></td>';
+            echo '<td class="ya24-referrer">';
+            echo $is_direct
+                ? '<span class="ya24-muted">Direct</span>'
+                : ($is_referrer_url
+                    ? '<a href="' . ya24_escape($referrer) . '" target="_blank" rel="noopener noreferrer" title="' . ya24_escape($referrer) . '">' . ya24_escape($referrer_label) . '</a>'
+                    : ya24_escape($referrer_label));
+            echo '</td>';
+            echo '<td class="ya24-country">' . ya24_escape(ya24_flag($cc)) . ' ' . ya24_escape(ya24_country_name($cc)) . '</td>';
             echo '</tr>';
         }
     } elseif ($click_error === '') {
-        echo '<tr><td colspan="5" class="ya24-muted">No clicks returned by the individual click query.</td></tr>';
+        echo '<tr><td colspan="6" class="ya24-muted">No clicks returned by the individual click query.</td></tr>';
     }
 
     echo '</tbody></table></div></div>';
+    echo '<script>';
+    echo '(function(){var table=document.getElementById("ya24-click-table");if(!table){return;}var buttons=table.querySelectorAll(".ya24-sort");buttons.forEach(function(button,column){button.addEventListener("click",function(){var direction=button.getAttribute("data-direction")==="asc"?"desc":"asc";buttons.forEach(function(item){item.removeAttribute("data-direction");});button.setAttribute("data-direction",direction);var rows=Array.prototype.slice.call(table.tBodies[0].rows);rows.sort(function(a,b){var left=a.cells[column].textContent.trim();var right=b.cells[column].textContent.trim();var comparison=button.getAttribute("data-type")==="number"?(Number(left)||0)-(Number(right)||0):left.localeCompare(right,undefined,{numeric:true,sensitivity:"base"});return direction==="asc"?comparison:-comparison;});rows.forEach(function(row){table.tBodies[0].appendChild(row);});});});})();';
+    echo '</script>';
     echo '</div>';
 }
